@@ -138,14 +138,14 @@ my_vulkan::my_vulkan(const char* app_name, const char* engine_name)
   my_gpu_ = get_physical_devices()[0];
 
 
-  // Did this to get the values for my gtx 980
+  // Did this to get the values for my gpu
   // could make dynamic, so it finds the proper thing for whatever system its on
   //auto q_family_prop_count = 0u;
   //vkGetPhysicalDeviceQueueFamilyProperties(my_gpu_, &q_family_prop_count, 0);
   //VkQueueFamilyProperties* q_family_props = new VkQueueFamilyProperties[q_family_prop_count];
   //vkGetPhysicalDeviceQueueFamilyProperties(my_gpu_, &q_family_prop_count, q_family_props);
 
-  queue_family_index_ = 0u; // values gotten for my gtx 980
+  queue_family_index_ = 0u; // values gotten for my gpu
 
   // https://www.khronos.org/registry/vulkan/specs/1.0/xhtml/vkspec.html#devsandqueues-queue-creation
   float q_priorities[1] = { 1.0f };
@@ -190,7 +190,7 @@ my_vulkan::my_vulkan(const char* app_name, const char* engine_name)
       }
   }
 
-  // for my 980 it seems like heap index 3 is what we need.
+  // for my gpu it seems like heap index 3 is what we need.
   heap_index_ = 3u;
   init_success_ = true;
 }
@@ -212,7 +212,7 @@ void my_vulkan::load_image(double** img, double** mask, uint32_t width, uint32_t
   for(auto i = 0u; i < width_; ++i){
     result_image_[i] = new double[height];
   }
-  // max my 980 can take with out adjusting the program
+  // max my gpu can take with out adjusting the program
   assert(width * height <= 2147483647u);
   // original image, mask, new image, hence times 3
   auto bytes_per_image = sizeof(double) * width * height;
@@ -610,7 +610,7 @@ void my_vulkan::load_command_pool(){
   vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_COMPUTE,
                           pipeline_layout_, 0u, 1u, &desc_set_, 0u, nullptr);
 
-  // my 980 can take a work group #0 size of 0x7fffffff = 2147483647
+  // my gpu can take a work group #0 size of 0x7fffffff = 2147483647
   // it can have 1 per pixel of a 46340 x 46350 image!
   vkCmdDispatch(command_buffer_, width_, height_, 1u);
 
@@ -636,6 +636,8 @@ void my_vulkan::run(unsigned steps){
     .pSignalSemaphores    = nullptr
   };
 
+  // SUSPECT
+  // for large step sizes my gpu will become unresponsive.
   for(auto n = 0u; n < steps; ++n){
     err = vkQueueSubmit(my_queue_, 1u, &submit_info, VK_NULL_HANDLE);
     //printf("vkQueueSubmit result %i\n", err);
