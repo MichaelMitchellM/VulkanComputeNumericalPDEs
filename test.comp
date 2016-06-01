@@ -1,0 +1,50 @@
+
+#version 450
+
+// TODO try float instead of double, measure performance and errors.
+
+layout(set=0, binding=0) buffer img
+{
+  double img_data[];
+};
+
+layout(set=0, binding=1) buffer mask
+{
+  double mask_data[];
+};
+
+layout(set=0, binding=2) buffer new_img
+{
+  double new_img_data[];
+};
+
+layout(set=0, binding=3) buffer variables
+{
+  double variable_data[];
+};
+
+void main()
+{
+  int width  = int(gl_NumWorkGroups.x);
+  int height = int(gl_NumWorkGroups.y);
+  int x = int(gl_WorkGroupID.x);
+  int y = int(gl_WorkGroupID.y);
+
+  int index = y * width + x;
+  if(mask_data[index] == 1.0){
+    int index0 = max(0, y - 1) * width + x;
+    int index1 = min(height - 1, y + 1) * width + x;
+    int index2 = y * width + max(0, x - 1);
+    int index3 = y * width + min(width - 1, x + 1);
+
+    new_img_data[index] = img_data[index0]
+                        + img_data[index1]
+                        + img_data[index2]
+                        + img_data[index3];
+    new_img_data[index] *= 0.25;
+
+    barrier();
+
+    img_data[index] = new_img_data[index];
+  }
+}
